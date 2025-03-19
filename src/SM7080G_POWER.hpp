@@ -4,6 +4,7 @@
 
 void turn_on_SM7080G();
 void reboot_SM7080G();
+void hard_resest_SIM7080G();
 void battery_info();
 
 String turn_off_SM7080G();

@@ -1,36 +1,43 @@
 #include "SM7080G_POWER.hpp"
-#include "GNSS_POWER.hpp"
-#include "GNSS_SERIAL.hpp"
+#include "SIM7080G_GNSS.hpp"
 
 #define Sim7080G Serial1
 #define Sim7080G_BAUDRATE 57600
 
+unsigned long period;
+
 void setup()
 {
   pinMode(PIN_PWKEY, OUTPUT);
+
+  Sim7080G.flush();
   reboot_SM7080G();
 
   Serial.begin(115200);
+
+  Serial.println(" ");
+  Serial.println("=============== STARTING ===============");
+
   Serial.println("Hello world !");
 
   Sim7080G.begin(Sim7080G_BAUDRATE, SERIAL_8N1, PIN_RX, PIN_TX);
-  String res = send_AT("AT+SIMCOMATI");
+  send_AT("AT+SIMCOMATI");
 
-  turn_on_GNSS();
-  set_mode();
+  setup_GNSS();
 
-  battery_info();
+  period = millis();
+
+  Serial.println("=======================================");
+  Serial.println(" ");
 }
 
 void loop()
 {
-  battery_info();
+  if (millis() - period > 1000)
+  {
+    period = millis();
 
-  GNSS_info();
-
-
-
-  delay(1000);
-
-  // Serial.println(millis());
+    battery_info();
+    get_info_GNSS();
+  }
 }
