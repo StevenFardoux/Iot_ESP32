@@ -1,8 +1,7 @@
+#pragma once
 #include "Arduino.h"
 
 #define Sim7080G Serial1
 
-void everyXs();
-
-String send_AT(String message);
+String send_AT(String message, unsigned int time = 2000);
 

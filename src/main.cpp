@@ -1,5 +1,5 @@
 #include "SM7080G_POWER.hpp"
-#include "SIM7080G_GNSS.hpp"
+#include "SIM7080G_CATM1.hpp"
 
 #define Sim7080G Serial1
 #define Sim7080G_BAUDRATE 57600
@@ -23,7 +23,8 @@ void setup()
   Sim7080G.begin(Sim7080G_BAUDRATE, SERIAL_8N1, PIN_RX, PIN_TX);
   send_AT("AT+SIMCOMATI");
 
-  setup_GNSS();
+  // setup_GNSS();
+  setup_CATM1();
 
   period = millis();
 
@@ -35,9 +36,11 @@ void loop()
 {
   if (millis() - period > 1000)
   {
-    period = millis();
+    // battery_info();
+    // get_info_GNSS();
 
-    battery_info();
-    get_info_GNSS();
+    // loop_CATM1();
+
+    period = millis();
   }
 }
