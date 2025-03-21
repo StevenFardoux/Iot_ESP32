@@ -71,4 +71,5 @@ void send_TCP_data(json *data)
     Sim7080G.print("\n");
 
     send_AT("AT+CACLOSE=0");
+    
 }
