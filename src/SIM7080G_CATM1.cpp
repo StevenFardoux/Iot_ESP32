@@ -1,11 +1,43 @@
 #include "SIM7080G_CATM1.hpp"
 
+unsigned long timerReset;
+uint8_t STATE_CATM1 = 1;
+
 bool isConnected(String str)
 {
     if (str == nullptr || !str)
         return false;
     if (atoi(str.c_str()) <= 4)
     {
+        switch (atoi(str.c_str()))
+        {
+        case 0:
+            if (millis() - timerReset > 5000)
+            {
+                Serial.println("Signal 0 : reset..");
+                hard_resest_SIM7080G();
+            }
+            break;
+
+        case 2:
+            if (millis() - timerReset > 240000)
+            {
+                Serial.println("Signal 2 : reset..");
+                hard_resest_SIM7080G();
+            }
+            break;
+
+        case 3:
+            if (millis() - timerReset > 20000)
+            {
+                Serial.println("Signal 2 : reset..");
+                hard_resest_SIM7080G();
+            }
+            break;
+
+        default:
+            break;
+        }
         // Serial.println("Return false");
 
         return false;
@@ -20,8 +52,8 @@ bool isConnected(String str)
 
 bool isRetrievesIP(String str)
 {
-    String resIp = Split(str, ',')[2]; // Retrives juste IP
-    String splitIp = Split(resIp, '.')[0]; // Retrieves first bit of IP
+    String resIp = Split(str, ',')[2];                // Retrives juste IP
+    String splitIp = Split(resIp, '.')[0];            // Retrieves first bit of IP
     splitIp = splitIp.substring(1, splitIp.length()); // Remove " from the beginning
 
     Serial.println("Res AT CNACT? : " + str);
@@ -39,11 +71,25 @@ bool isRetrievesIP(String str)
     }
 }
 
-void setup_CATM1()
+uint8_t getCereg()
 {
-    String resAT, resPDP, resSignal = "";
-    unsigned long timer;
+    String resAT = send_AT("AT+CEREG?");
+    uint8_t resSignal = 0;
 
+    // Serial.println("Response : " + resAT);
+    resAT.trim();
+
+    if (resAT != "")
+    {
+        resSignal = atoi(Split(resAT, ',')[1].c_str());
+        // Serial.println("Signal : " + resSignal);
+    }
+
+    return resSignal;
+}
+
+void setup_CATM1_fsm(uint8_t *state_CATM1)
+{
     // You must turn off GNSS before turning on CATM1
     turn_off_GNSS();
 
@@ -65,10 +111,13 @@ void setup_CATM1()
     send_AT("AT+CGNAPN");
     send_AT("AT+CNCFG=0,1,iot.1nce.net");
 
-    // APP Network Active (PDP context)
-    // You should wait for a valid response : +APP PDP: 0,ACTIVE
+    *state_CATM1 = PDP;
+}
 
-    resAT = send_AT("AT+CNACT=0,1", 15000);
+void pdp_fsm(uint8_t *state_MAIN, uint8_t *state_CATM1)
+{
+    String resAT = send_AT("AT+CNACT=0,1", 15000);
+    String resPDP;
 
     if (resAT != "")
     {
@@ -77,12 +126,97 @@ void setup_CATM1()
         if (resPDP != "")
         {
             Serial.println("No response from PDP");
+            // *state_MAIN = TURN_OFF;
+            *state_CATM1 = CEREG; // Temporaire
         }
         else
         {
-            Serial.printf("PDP est %d \n", resPDP);
+            Serial.printf("PDP is %d \n", resPDP);
+            *state_CATM1 = CEREG;
         }
     }
+}
+
+void cereg_fsm(uint8_t *state_MAIN, uint8_t *state_CATM1)
+{
+    uint8_t cereg = getCereg();
+
+    if (cereg == 5)
+    {
+        *state_CATM1 = IP;
+    }
+    if (cereg == 0 && timerReset >= 5000)
+    {
+        *state_MAIN = TURN_OFF;
+    }
+    if (cereg == 2 && timerReset >= 240000)
+    {
+        *state_MAIN = TURN_OFF;
+    }
+    if (cereg == 3 && timerReset >= 20000)
+    {
+        *state_MAIN = TURN_OFF;
+    }
+}
+
+void get_IP_fsm(uint8_t *state_CATM1)
+{
+    String resAT = send_AT("AT+CNACT?");
+
+    if (isRetrievesIP(resAT))
+    {
+        // *state_CATM1 = TURN_OFF;
+    }
+}
+
+void CATM1_info()
+{
+    send_AT("AT+CEREG?");
+    send_AT("AT+CSQ");
+}
+
+void CATM1_fsm(uint8_t *state_MAIN)
+{
+    switch (STATE_CATM1)
+    {
+    case SETUP:
+        Serial.println("    |_ SETUP CATM1");
+        setup_CATM1_fsm(&STATE_CATM1);
+        break;
+
+    case PDP:
+        Serial.println("    |_ PDP CATM1");
+        pdp_fsm(state_MAIN, &STATE_CATM1);
+        timerReset = millis();
+        break;
+
+    case CEREG:
+        Serial.println("    |_ CEREG CATM1");
+        cereg_fsm(state_MAIN, &STATE_CATM1);
+        break;
+
+    case IP:
+        Serial.println("    |_ IP CATM1");
+        get_IP_fsm(state_MAIN);
+        break;
+
+    case INFO:
+        Serial.println("    |_ INFO CATM1");
+        CATM1_info();
+        break;
+
+    default:
+        break;
+    }
+}
+
+void setup_CATM1()
+{
+    String resAT, resPDP, resSignal = "";
+    unsigned long timer;
+
+    // APP Network Active (PDP context)
+    // You should wait for a valid response : +APP PDP: 0,ACTIVE
 
     /*
     We wait for the SIM7080G to register to the local 4G antenna
@@ -91,13 +225,15 @@ void setup_CATM1()
     +CEREG: 0,5
     */
 
+    timerReset = millis();
     timer = millis();
     resAT = "";
+
     while (true)
     {
         if (millis() - timer > 1000)
         {
-            resAT = send_AT("AT+CEREG?");
+            String resAT = send_AT("AT+CEREG?");
 
             Serial.println("Response : " + resAT);
             resAT.trim();
@@ -105,19 +241,15 @@ void setup_CATM1()
             if (resAT != "")
             {
                 resSignal = Split(resAT, ',')[1];
-
                 Serial.println("Signal : " + resSignal);
             }
-
             if (isConnected(resSignal))
             {
-
                 break;
             }
             timer = millis();
         }
     }
-
 
     // informations for you on CAT-M1 connexion
     send_AT("AT+CGATT?");

@@ -1,5 +1,7 @@
 #include "SM7080G_SERIAL.hpp"
 
+uint8_t nbError = 0;
+
 String send_AT(String message, unsigned int time)
 {
     char tmp_char = 0;
@@ -10,6 +12,8 @@ String send_AT(String message, unsigned int time)
     Serial.println("=============== AT MESSAGE ===============");
 
     Sim7080G.println(message);
+
+    Serial.println("AT Message received : " + message);
 
     while (millis() - period1 < time && !str.endsWith("OK"))
     {
@@ -41,6 +45,9 @@ String send_AT(String message, unsigned int time)
     str.remove(str.indexOf('\n'), str.length());
 
     // Serial.println("str return : " + str);
+    str.trim();
+
+    // Serial.println("str return len : " + str.length());
 
     return str;
 }

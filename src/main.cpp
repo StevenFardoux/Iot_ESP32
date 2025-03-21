@@ -1,10 +1,10 @@
-#include "SM7080G_POWER.hpp"
-#include "SIM7080G_CATM1.hpp"
+#include "SIM7080G_FSM.hpp"
+#include "SIM7080G_TCP.hpp"
 
 #define Sim7080G Serial1
 #define Sim7080G_BAUDRATE 57600
 
-unsigned long period;
+
 
 void setup()
 {
@@ -24,9 +24,11 @@ void setup()
   send_AT("AT+SIMCOMATI");
 
   // setup_GNSS();
-  setup_CATM1();
+  // setup_CATM1();
 
-  period = millis();
+  // TCP_send();
+
+  // period = millis();
 
   Serial.println("=======================================");
   Serial.println(" ");
@@ -34,13 +36,5 @@ void setup()
 
 void loop()
 {
-  if (millis() - period > 1000)
-  {
-    // battery_info();
-    // get_info_GNSS();
-
-    // loop_CATM1();
-
-    period = millis();
-  }
+  sim7080g_fsm();
 }

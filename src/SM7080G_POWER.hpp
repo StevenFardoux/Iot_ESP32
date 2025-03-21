@@ -1,3 +1,4 @@
+#pragma once
 #include "Arduino.h"
 #include "SM7080G_SERIAL.hpp"
 #include "ARGARI_PINOUT.hpp"
