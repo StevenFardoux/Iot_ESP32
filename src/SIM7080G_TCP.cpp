@@ -1,20 +1,31 @@
 #include "SIM7080G_TCP.hpp"
 
-void TCP_send()
+void TCP_send(uint8_t *state)
 {
-    
-    send_AT("AT+CAOPEN=0,0,\"TCP\",\"rnsgp-2a04-cec0-115b-37ed-392d-81be-5e94-59f4.a.free.pinggy.link\",33777");
-    
-    //cf datasheet
-    send_AT("AT+CASEND=0,6");
-    //attendre le charactère '>' avant d'envoyer la data    
-    send_AT("coucou");
+    String res = send_AT("AT+CAOPEN=0,0,\"TCP\",\"rnkdc-185-223-151-250.a.free.pinggy.link\",38037");
+    if (res != "0,0")
+    {
+        if (res == "0,0")
+        {
+            Serial.println("=======================================================================");
+            Serial.println("* URL or IP incorect, chek TCP informations. Trying to get new IP.... *");
+            Serial.println("=======================================================================");
+            Serial.println("");
 
-    //send_TCP_packet_data(&j);
+            *state = CATM1_INIT;
+            return;
+        }
+        else
+        {
+            send_AT("AT+CACLOSE=0");
+            return;
+        }
+    }
+
+    json data = {
+        {"data", "c'est moi et pas cbor"}};
+
+    send_TCP_data(&data);
 
     send_AT("AT+CACLOSE=0");
-    //send_AT(AT+CARECV,1460);
-
 }
-
-

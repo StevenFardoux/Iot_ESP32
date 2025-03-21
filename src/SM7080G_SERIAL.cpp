@@ -13,9 +13,9 @@ String send_AT(String message, unsigned int time)
 
     Sim7080G.println(message);
 
-    Serial.println("AT Message received : " + message);
+    // Serial.println("AT Message received : " + message);
 
-    while (millis() - period1 < time && !str.endsWith("OK"))
+    while (millis() - period1 < time && !str.endsWith("OK") && !str.endsWith(">"))
     {
         if (Sim7080G.available())
         {
@@ -50,4 +50,25 @@ String send_AT(String message, unsigned int time)
     // Serial.println("str return len : " + str.length());
 
     return str;
+}
+
+void send_TCP_data(json *data)
+{
+    std::vector<std::uint8_t> vec = json::to_cbor(*data);
+
+    Serial.println(" ");
+    Serial.println("=============== AT MESSAGE CBOR ===============");
+
+    Serial.printf("Vector size : %d \n", vec.size());
+
+    send_AT("AT+CASEND=0," + String(vec.size()), 5000);
+    for (int i = 0; i <= vec.size(); i++)
+    {
+        Sim7080G.write((char)vec[i]);
+        Serial.print((char)vec[i]);
+    }
+
+    Sim7080G.print("\n");
+
+    send_AT("AT+CACLOSE=0");
 }

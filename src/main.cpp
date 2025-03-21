@@ -26,9 +26,11 @@ void setup()
   // setup_GNSS();
   // setup_CATM1();
 
-  // TCP_send();
-
   // period = millis();
+
+  // sim7080g_fsm();
+
+  // TCP_send();
 
   Serial.println("=======================================");
   Serial.println(" ");

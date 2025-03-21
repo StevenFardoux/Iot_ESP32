@@ -145,15 +145,15 @@ void cereg_fsm(uint8_t *state_MAIN, uint8_t *state_CATM1)
     {
         *state_CATM1 = IP;
     }
-    if (cereg == 0 && timerReset >= 5000)
+    if (cereg == 0 && millis() - timerReset > 5000)
     {
         *state_MAIN = TURN_OFF;
     }
-    if (cereg == 2 && timerReset >= 240000)
+    if (cereg == 2 && millis() - timerReset > 240000)
     {
         *state_MAIN = TURN_OFF;
     }
-    if (cereg == 3 && timerReset >= 20000)
+    if (cereg == 3 && millis() - timerReset > 20000)
     {
         *state_MAIN = TURN_OFF;
     }
@@ -165,7 +165,7 @@ void get_IP_fsm(uint8_t *state_CATM1)
 
     if (isRetrievesIP(resAT))
     {
-        // *state_CATM1 = TURN_OFF;
+        *state_CATM1 = TCP;
     }
 }
 

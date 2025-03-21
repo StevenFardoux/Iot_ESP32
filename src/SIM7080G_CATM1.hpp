@@ -3,6 +3,7 @@
 #include "SIM7080G_GNSS.hpp"
 #include "SIM7080G_FSM.hpp"
 
+
 // CATM1 state
 #define SETUP 1
 #define PDP 2
