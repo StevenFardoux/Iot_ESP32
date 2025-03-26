@@ -23,7 +23,7 @@ void setup()
   Sim7080G.begin(Sim7080G_BAUDRATE, SERIAL_8N1, PIN_RX, PIN_TX);
   send_AT("AT+SIMCOMATI");
 
-  // setup_GNSS();
+  setup_GNSS();
   // setup_CATM1();
 
   // period = millis();
@@ -38,5 +38,6 @@ void setup()
 
 void loop()
 {
-  sim7080g_fsm();
+  // sim7080g_fsm();
+  get_info_GNSS();
 }
